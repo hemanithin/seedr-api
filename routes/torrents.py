@@ -5,6 +5,9 @@ from seedrcc.exceptions import SeedrError
 from utils import client_manager
 from utils.serialization import to_dict
 import requests
+import subprocess
+import os
+from config import Config
 
 
 # Create namespace
@@ -229,7 +232,8 @@ class AddAndDownloadTorrent(Resource):
         'skip_space_check': fields.Boolean(description='Skip space validation (default: false)', default=False),
         'wait_for_completion': fields.Boolean(description='Wait for download to complete (default: true)', default=True),
         'max_wait_seconds': fields.Integer(description='Maximum seconds to wait (default: 300, max: 600)', default=300),
-        'poll_interval': fields.Integer(description='Seconds between status checks (default: 5)', default=5)
+        'poll_interval': fields.Integer(description='Seconds between status checks (default: 5)', default=5),
+        'play_in_vlc': fields.Boolean(description='Play in VLC after download (default: false). Single file plays directly, multiple files are enqueued.', default=False)
     }))
     @torrents_ns.response(200, 'Success - Torrent added and download URLs retrieved')
     @torrents_ns.response(202, 'Accepted - Torrent added but still downloading')
@@ -255,6 +259,7 @@ class AddAndDownloadTorrent(Resource):
             wait_for_completion = data.get('wait_for_completion', True)
             max_wait_seconds = min(data.get('max_wait_seconds', 300), 600)  # Cap at 10 minutes
             poll_interval = max(data.get('poll_interval', 5), 2)  # Minimum 2 seconds
+            play_in_vlc = data.get('play_in_vlc', False)
             
             if not magnet_link:
                 return {'error': 'Magnet link is required'}, 400
@@ -375,6 +380,56 @@ class AddAndDownloadTorrent(Resource):
                                 response_data['message'] = f'Torrent completed! {len(response_data["files"])} file(s) ready for download'
                                 response_data['status'] = 'completed'
                                 response_data['wait_time_seconds'] = int(time.time() - start_time)
+                                
+                                # Play in VLC if requested
+                                if play_in_vlc:
+                                    vlc_results = []
+                                    vlc_path = Config.VLC_PATH
+                                    
+                                    # Check if VLC exists
+                                    if not os.path.exists(vlc_path):
+                                        response_data['vlc_error'] = f'VLC not found at: {vlc_path}'
+                                    else:
+                                        # Get files with valid download URLs
+                                        valid_files = [f for f in response_data['files'] if 'download_url' in f]
+                                        
+                                        if valid_files:
+                                            # Single file: play directly (no enqueue)
+                                            # Multiple files: enqueue all
+                                            enqueue = len(valid_files) > 1
+                                            
+                                            for file in valid_files:
+                                                try:
+                                                    if enqueue:
+                                                        # Enqueue for multiple files
+                                                        vlc_command = [vlc_path, "--one-instance", "--playlist-enqueue", file['download_url']]
+                                                    else:
+                                                        # Play directly for single file
+                                                        vlc_command = [vlc_path, file['download_url']]
+                                                    
+                                                    subprocess.Popen(vlc_command)
+                                                    vlc_results.append({
+                                                        'file': file['name'],
+                                                        'status': 'enqueued' if enqueue else 'playing',
+                                                        'success': True
+                                                    })
+                                                except Exception as e:
+                                                    vlc_results.append({
+                                                        'file': file['name'],
+                                                        'status': 'error',
+                                                        'error': str(e),
+                                                        'success': False
+                                                    })
+                                            
+                                            response_data['vlc_playback'] = {
+                                                'attempted': True,
+                                                'mode': 'enqueued' if enqueue else 'playing',
+                                                'total_files': len(valid_files),
+                                                'results': vlc_results
+                                            }
+                                        else:
+                                            response_data['vlc_error'] = 'No valid download URLs available for VLC playback'
+                                
                                 return response_data, 200
                     
                     # Still downloading, wait and retry
