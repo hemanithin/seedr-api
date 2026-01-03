@@ -24,6 +24,7 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
@@ -42,7 +43,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
         include:
           - os: ubuntu-latest
             artifact_name: seedr-api-linux
@@ -50,9 +51,6 @@ jobs:
           - os: windows-latest
             artifact_name: seedr-api-windows.exe
             asset_name: seedr-api-windows.exe
-          - os: macos-latest
-            artifact_name: seedr-api-macos
-            asset_name: seedr-api-macos
 
     steps:
     - uses: actions/checkout@v4
@@ -62,6 +60,7 @@ jobs:
         python-version: "3.10"
     
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
