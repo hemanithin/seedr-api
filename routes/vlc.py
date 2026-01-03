@@ -1,15 +1,14 @@
 from flask import request
 from flask_restx import Namespace, Resource, fields
+from config import Config
 import subprocess
 import os
 
 # Create namespace
 vlc_ns = Namespace('vlc', description='VLC media player operations')
 
-# VLC path configuration - Windows default
-VLC_PATH = r"C:\Program Files\VideoLAN\VLC\vlc.exe"
-# For Linux: VLC_PATH = "/usr/bin/vlc"
-# For macOS: VLC_PATH = "/Applications/VLC.app/Contents/MacOS/VLC"
+# VLC path from configuration (can be set in .env file)
+VLC_PATH = Config.VLC_PATH
 
 
 @vlc_ns.route('/play')

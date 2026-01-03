@@ -28,3 +28,6 @@ class Config:
     DEFAULT_USERNAME = os.getenv('DEFAULT_USERNAME')
     DEFAULT_PASSWORD = os.getenv('DEFAULT_PASSWORD')
     DEFAULT_AUTH = os.getenv('DEFAULT_AUTH', 'False').lower() == 'true'
+    
+    # VLC Media Player
+    VLC_PATH = os.getenv('VLC_PATH', r'C:\Program Files\VideoLAN\VLC\vlc.exe')
