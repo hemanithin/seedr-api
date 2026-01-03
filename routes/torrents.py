@@ -4,6 +4,7 @@ from werkzeug.datastructures import FileStorage
 from seedrcc.exceptions import SeedrError
 from utils import client_manager
 from utils.serialization import to_dict
+import requests
 
 
 # Create namespace
@@ -207,3 +208,55 @@ class ListTorrents(Resource):
             return {'error': str(e)}, 500
         except Exception as e:
             return {'error': f'Unexpected error: {str(e)}'}, 500
+
+
+@torrents_ns.route('/metadata')
+class TorrentMetadata(Resource):
+    @torrents_ns.doc('get_torrent_metadata')
+    @torrents_ns.expect(torrents_ns.model('TorrentMetadataRequest', {
+        'query': fields.String(required=True, description='Magnet link or torrent file URL')
+    }))
+    @torrents_ns.response(200, 'Success')
+    @torrents_ns.response(400, 'Validation Error')
+    @torrents_ns.response(500, 'Server Error')
+    def post(self):
+        """Get torrent metadata from magnet link or torrent file URL"""
+        try:
+            data = request.get_json()
+            query = data.get('query')
+            
+            if not query:
+                return {'error': 'Query parameter (magnet link or torrent URL) is required'}, 400
+            
+            # Call TorrentMeta API
+            torrentmeta_url = 'https://torrentmeta.fly.dev'
+            headers = {'Content-Type': 'application/json'}
+            payload = {'query': query}
+            
+            response = requests.post(
+                torrentmeta_url,
+                json=payload,
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                metadata = response.json()
+                return {
+                    'success': True,
+                    'metadata': metadata
+                }, 200
+            else:
+                return {
+                    'error': 'Failed to fetch torrent metadata',
+                    'status_code': response.status_code,
+                    'details': response.text
+                }, 500
+                
+        except requests.exceptions.Timeout:
+            return {'error': 'Request to TorrentMeta API timed out'}, 500
+        except requests.exceptions.RequestException as e:
+            return {'error': f'Request error: {str(e)}'}, 500
+        except Exception as e:
+            return {'error': f'Unexpected error: {str(e)}'}, 500
+
