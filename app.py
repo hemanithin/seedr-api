@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restx import Api
 from config import Config
-from routes import auth_ns, account_ns, files_ns, torrents_ns
+from routes import auth_ns, account_ns, files_ns, torrents_ns, vlc_ns
 
 
 def create_app():
@@ -24,6 +24,7 @@ def create_app():
     api.add_namespace(account_ns, path='/account')
     api.add_namespace(files_ns, path='/files')
     api.add_namespace(torrents_ns, path='/torrents')
+    api.add_namespace(vlc_ns, path='/vlc')
     
     # Initialize default authentication if enabled
     if app.config.get('DEFAULT_AUTH'):
@@ -51,7 +52,8 @@ def create_app():
                 'authentication': '/api/v1/auth',
                 'account': '/api/v1/account',
                 'files': '/api/v1/files',
-                'torrents': '/api/v1/torrents'
+                'torrents': '/api/v1/torrents',
+                'vlc': '/api/v1/vlc'
             }
         }
     
@@ -84,6 +86,7 @@ if __name__ == '__main__':
     ║  • Account:        /api/v1/account                        ║
     ║  • Files:          /api/v1/files                          ║
     ║  • Torrents:       /api/v1/torrents                       ║
+    ║  • VLC Player:     /api/v1/vlc                            ║
     ╚═══════════════════════════════════════════════════════════╝
     """)
     app.run(
