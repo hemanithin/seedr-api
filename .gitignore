@@ -23,3 +23,5 @@ Thumbs.db
 *.log
 my_seedr_files.json
 tokens.json
+build/
+dist/
