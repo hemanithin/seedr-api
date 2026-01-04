@@ -139,6 +139,36 @@ Retrieves a list of devices authorized to access the account.
 | `old_password` | string | Yes | Current password |
 | `new_password` | string | Yes | New password |
 
+### Get Wishlist
+`GET /list_wishlist`
+
+Retrieves the user's wishlist items.
+
+**Query Parameters**
+- `user_id`: string (default: "default")
+
+**Response (Success 200)**
+```json
+{
+  "result": true,
+  "code": 200,
+  "wishlist": [
+    {
+      "id": 35382393,
+      "user_id": 3526833,
+      "title": "Torrent Title",
+      "size": 10059377743,
+      "torrent_hash": "2a43e0ea55e594c32db7b965e735bbe06997fb51",
+      "torrent_magnet": "magnet:?xt=urn:btih:...",
+      "torrent_meta": "0",
+      "created": "2026-01-04 13:45:16",
+      "added": 0,
+      "is_private": 0
+    }
+  ]
+}
+```
+
 ---
 
 ## 📁 Files

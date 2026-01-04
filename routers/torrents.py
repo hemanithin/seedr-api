@@ -103,16 +103,31 @@ def add_torrent(
     client: Seedr = Depends(get_seedr_client)
 ):
     try:
+        # Call add_torrent and get the raw result
         result = client.add_torrent(
             magnet_link=request.magnet_link,
             wishlist_id=request.wishlist_id,
             folder_id=request.folder_id
         )
-        return {
-            "success": True,
-            "message": "Torrent added successfully",
-            "result": to_dict(result)
-        }
+        
+        # If result has a response attribute (httpx Response object)
+        if hasattr(result, 'status_code') and hasattr(result, 'text'):
+            seedr_response = {
+                "status_code": result.status_code,
+                "raw_response": result.text
+            }
+            return {
+                "success": True,
+                "message": "Torrent added successfully",
+                "seedr_response": seedr_response
+            }
+        else:
+            # Fallback to dict conversion
+            return {
+                "success": True,
+                "message": "Torrent added successfully",
+                "result": to_dict(result)
+            }
     except SeedrError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
@@ -159,10 +174,19 @@ def smart_add_torrent(
             folder_id=request.folder_id
         )
         
+        # Handle raw response or dict conversion
+        if hasattr(result, 'status_code') and hasattr(result, 'text'):
+            result_data = {
+                "status_code": result.status_code,
+                "raw_response": result.text
+            }
+        else:
+            result_data = to_dict(result)
+        
         response_data = {
             "success": True,
             "message": "Torrent added successfully",
-            "result": to_dict(result)
+            "result": result_data
         }
         
         if not request.skip_space_check:
@@ -215,10 +239,19 @@ def add_and_download(
         # Add Torrent
         add_result = client.add_torrent(magnet_link=request.magnet_link, folder_id=request.folder_id)
         
+        # Handle raw response or dict conversion
+        if hasattr(add_result, 'status_code') and hasattr(add_result, 'text'):
+            torrent_info = {
+                "status_code": add_result.status_code,
+                "raw_response": add_result.text
+            }
+        else:
+            torrent_info = to_dict(add_result)
+        
         response_data = {
             "success": True,
             "message": "Torrent added successfully",
-            "torrent_info": to_dict(add_result),
+            "torrent_info": torrent_info,
             "files": []
         }
 
@@ -334,10 +367,20 @@ def add_torrent_file(
             wishlist_id=wishlist_id,
             folder_id=folder_id
         )
+        
+        # Handle raw response or dict conversion
+        if hasattr(result, 'status_code') and hasattr(result, 'text'):
+            result_data = {
+                "status_code": result.status_code,
+                "raw_response": result.text
+            }
+        else:
+            result_data = to_dict(result)
+        
         return {
             "success": True,
             "message": "Torrent added successfully",
-            "result": to_dict(result)
+            "result": result_data
         }
     except SeedrError as e:
         raise HTTPException(status_code=500, detail=str(e))

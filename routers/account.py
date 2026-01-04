@@ -59,6 +59,29 @@ def get_devices(client: Seedr = Depends(get_seedr_client)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
+@router.get("/list_wishlist", summary="Get user's wishlist")
+def list_wishlist(client: Seedr = Depends(get_seedr_client)):
+    try:
+        settings = client.get_settings()
+        settings_dict = to_dict(settings)
+        
+        # Extract wishlist from account data
+        wishlist = []
+        if isinstance(settings_dict, dict):
+            account = settings_dict.get('account', {})
+            if isinstance(account, dict):
+                wishlist = account.get('wishlist', [])
+        
+        return {
+            "result": True,
+            "code": 200,
+            "wishlist": wishlist
+        }
+    except SeedrError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
 @router.put("/name", summary="Change account name")
 def change_name(request: ChangeNameRequest, client: Seedr = Depends(get_seedr_client)):
     try:
