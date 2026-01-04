@@ -1,3 +1,5 @@
+![Seedr API Manager Banner](etc/githubbanner.png)
+
 # Seedr API Manager
 
 A high-performance, automated REST API wrapper for Seedr.cc, built with **FastAPI**.
