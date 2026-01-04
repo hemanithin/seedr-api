@@ -3,7 +3,7 @@ import os
 from threading import Lock
 from typing import Optional, Dict, Any
 from seedrcc import Seedr
-from config import Config
+from config import settings
 
 
 class SeedrClientManager:
@@ -12,7 +12,7 @@ class SeedrClientManager:
     def __init__(self):
         self.clients: Dict[str, Seedr] = {}
         self.lock = Lock()
-        self.token_storage_path = Config.TOKEN_STORAGE_PATH
+        self.token_storage_path = settings.TOKEN_STORAGE_PATH
         self._default_auth_initialized = False
     
     def _token_to_dict(self, token_data: Any) -> Dict[str, Any]:
@@ -81,8 +81,8 @@ class SeedrClientManager:
             username=username,
             password=password,
             on_token_refresh=on_token_refresh,
-            timeout=Config.SEEDR_TIMEOUT,
-            proxy=Config.SEEDR_PROXY
+            timeout=settings.SEEDR_TIMEOUT,
+            proxy=settings.encoded_proxy
         )
         
         with self.lock:
@@ -102,8 +102,8 @@ class SeedrClientManager:
         client = Seedr.from_device_code(
             device_code=device_code,
             on_token_refresh=on_token_refresh,
-            timeout=Config.SEEDR_TIMEOUT,
-            proxy=Config.SEEDR_PROXY
+            timeout=settings.SEEDR_TIMEOUT,
+            proxy=settings.encoded_proxy
         )
         
         with self.lock:
@@ -123,8 +123,8 @@ class SeedrClientManager:
         client = Seedr.from_refresh_token(
             refresh_token=refresh_token,
             on_token_refresh=on_token_refresh,
-            timeout=Config.SEEDR_TIMEOUT,
-            proxy=Config.SEEDR_PROXY
+            timeout=settings.SEEDR_TIMEOUT,
+            proxy=settings.encoded_proxy
         )
         
         with self.lock:
@@ -144,8 +144,8 @@ class SeedrClientManager:
         client = Seedr(
             token=token,
             on_token_refresh=on_token_refresh,
-            timeout=Config.SEEDR_TIMEOUT,
-            proxy=Config.SEEDR_PROXY
+            timeout=settings.SEEDR_TIMEOUT,
+            proxy=settings.encoded_proxy
         )
         
         with self.lock:
@@ -155,29 +155,29 @@ class SeedrClientManager:
     
     def get_effective_user_id(self, requested_user_id: str = 'default') -> str:
         """Get effective user_id based on DEFAULT_AUTH setting"""
-        if Config.DEFAULT_AUTH:
+        if settings.DEFAULT_AUTH:
             return 'default'
         return requested_user_id
     
     def initialize_default_auth(self) -> bool:
         """Initialize default authentication if DEFAULT_AUTH is enabled"""
-        if not Config.DEFAULT_AUTH:
+        if not settings.DEFAULT_AUTH:
             return False
         
         if self._default_auth_initialized:
             return True
         
-        if not Config.DEFAULT_USERNAME or not Config.DEFAULT_PASSWORD:
+        if not settings.DEFAULT_USERNAME or not settings.DEFAULT_PASSWORD:
             print("WARNING: DEFAULT_AUTH is enabled but DEFAULT_USERNAME or DEFAULT_PASSWORD is not set")
             return False
         
         try:
-            print(f"Initializing default authentication for user: {Config.DEFAULT_USERNAME}")
-            self.create_client_from_password(Config.DEFAULT_USERNAME, Config.DEFAULT_PASSWORD)
+            print(f"Initializing default authentication for user: {settings.DEFAULT_USERNAME}")
+            self.create_client_from_password(settings.DEFAULT_USERNAME, settings.DEFAULT_PASSWORD)
             # Store as 'default' user_id
             with self.lock:
-                if Config.DEFAULT_USERNAME in self.clients:
-                    self.clients['default'] = self.clients[Config.DEFAULT_USERNAME]
+                if settings.DEFAULT_USERNAME in self.clients:
+                    self.clients['default'] = self.clients[settings.DEFAULT_USERNAME]
             self._default_auth_initialized = True
             print("Default authentication initialized successfully")
             return True
@@ -188,7 +188,7 @@ class SeedrClientManager:
     def get_client(self, user_id: str = 'default') -> Optional[Seedr]:
         """Get existing client or create from stored token"""
         # Auto-initialize if DEFAULT_AUTH is enabled and not yet initialized
-        if Config.DEFAULT_AUTH and not self._default_auth_initialized:
+        if settings.DEFAULT_AUTH and not self._default_auth_initialized:
             self.initialize_default_auth()
         
         # Enforce default user_id if DEFAULT_AUTH is enabled

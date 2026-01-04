@@ -1,6 +1,6 @@
 # Seedr API Reference
 
-This document provides a comprehensive reference for the Seedr API wrapper. It details all available endpoints, their method, parameters, and response structures, including positive and negative scenarios.
+This document provides a comprehensive reference for the Seedr API wrapper. It details all available endpoints, their methods, parameters, and response structures.
 
 ## 🔗 Authentication
 
@@ -41,20 +41,13 @@ Authenticates using Seedr username and password.
   "message": "Login successful",
   "user_id": "user@example.com",
   "token": {
-    "access_token": "62a1135cbd5c7de308db950ef7c55525628c2075",
-    "refresh_token": "7ff9714e61c8dee059c35e22fd13e02d0fd29aea",
+    "access_token": "...",
+    "refresh_token": "...",
     "device_code": null,
-    "user_id": 3526833,
-    "client_id": "seedr_chrome_extension",
+    "user_id": 12345,
+    "client_id": "...",
     "grant_type": "password"
   }
-}
-```
-
-**Response (Authentication Failed 401)**
-```json
-{
-  "error": "Authentication failed: Invalid credentials"
 }
 ```
 
@@ -71,19 +64,40 @@ Completes the device code authentication flow.
 | `device_code` | string | Yes | Code obtained from `/device-code` |
 | `user_id` | string | No | Optional identifier (default: "default") |
 
-**Response (Success 200)**
-```json
-{
-  "message": "Login successful",
-  "user_id": "default",
-  "token": {
-     "access_token": "...",
-     "refresh_token": "...",
-     "device_code": "...",
-     ...
-  }
-}
-```
+---
+
+### Login with Refresh Token
+`POST /login/refresh-token`
+
+Authenticates using an existing refresh token.
+
+**Body Parameters**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `refresh_token` | string | Yes | Valid refresh token |
+| `user_id` | string | No | Optional identifier (default: "default") |
+
+---
+
+### Refresh Access Token
+`POST /refresh`
+
+Refreshes the current access token.
+
+**Query Parameters**
+- `user_id`: string (default: "default")
+
+---
+
+### Logout
+`POST /logout`
+
+Logs out and removes the stored session.
+
+**Query Parameters**
+- `user_id`: string (default: "default")
+
+---
 
 ## 👤 Account
 
@@ -97,53 +111,35 @@ Retrieves account settings.
 **Query Parameters**
 - `user_id`: string (default: "default")
 
-**Response (Success 200)**
-```json
-{
-  "result": true,
-  "code": 200,
-  "settings": {
-    "allow_remote_access": true,
-    "site_language": "en",
-    "subtitles_language": "eng",
-    "email_announcements": true,
-    "email_newsletter": true
-  },
-  "account": {
-    "username": "user@email.com",
-    "user_id": 1234567,
-    "premium": 0,
-    "package_id": -1,
-    "package_name": "NON-PREMIUM",
-    "space_used": 1732991947,
-    "space_max": 4831838208,
-    "bandwidth_used": 44523158818,
-    "email": "user@email.com"
-  },
-  "country": "India"
-}
-```
-
----
-
 ### Get Memory & Bandwidth
 `GET /memory-bandwidth`
 
 Retrieves storage and bandwidth usage information.
 
-**Query Parameters**
-- `user_id`: string (default: "default")
+### Get Authorized Devices
+`GET /devices`
 
-**Response (Success 200)**
-```json
-{
-  "bandwidth_used": 44523158818,
-  "bandwidth_max": 536870912000,
-  "space_used": 1732991947,
-  "space_max": 4831838208,
-  "is_premium": 0
-}
-```
+Retrieves a list of devices authorized to access the account.
+
+### Change Account Name
+`PUT /name`
+
+**Body Parameters**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | string | Yes | New name |
+| `password` | string | Yes | Current password |
+
+### Change Password
+`PUT /password`
+
+**Body Parameters**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `old_password` | string | Yes | Current password |
+| `new_password` | string | Yes | New password |
+
+---
 
 ## 📁 Files
 
@@ -157,80 +153,87 @@ Lists contents of a specific folder (or root).
 **Query Parameters**
 | Name | Type | Description |
 |------|------|-------------|
-| `user_id` | string | User identifier (default: "default") |
 | `folder_id` | string | Folder ID to list (default: "0" for root) |
+| `user_id` | string | User identifier |
 
-**Response (Success 200)**
-```json
-{
-  "folders": [
-    {
-      "id": 12345,
-      "name": "My Folder",
-      "size": 0,
-      "last_update": "2024-01-01 12:00:00"
-    }
-  ],
-  "files": [
-    {
-      "folder_file_id": 67890,
-      "name": "video.mp4",
-      "size": 1048576,
-      "date": "2024-01-01 12:00:00",
-      "play_video": true
-    }
-  ]
-}
-```
+### List All Contents
+`GET /list-all`
 
----
+Recursively lists all files and folders in the account.
 
 ### Create Folder
 `POST /folder`
-
-Creates a new folder.
 
 **Body Parameters**
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `name` | string | Yes | Name of the new folder |
 
-**Response (Success 200)**
-```json
-{
-  "success": true,
-  "message": "Folder created successfully",
-  "result": {
-      "id": 123456,
-      "name": "New Folder",
-      "result": true,
-      "code": 200
-  }
-}
-```
+### Rename File
+`PUT /file/{file_id}/rename`
 
----
+**Body Parameters**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `new_name` | string | Yes | New filename |
+
+### Rename Folder
+`PUT /folder/{folder_id}/rename`
+
+**Body Parameters**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `new_name` | string | Yes | New folder name |
+
+### Delete File
+`DELETE /file/{file_id}`
+
+Deletes a specific file.
+
+### Delete Folder
+`DELETE /folder/{folder_id}`
+
+Deletes a specific folder.
+
+### Search Files
+`GET /search`
+
+Searches for files matching a query.
+
+**Query Parameters**
+- `query`: string (Required)
 
 ### Get Download URL (Fetch)
-`GET /fetch/<file_id>`
+`GET /fetch/{file_id}`
 
 Gets the direct download URL for a file.
 
-**Path Parameters**
-- `file_id`: ID of the file to download
+### Create Folder Archive
+`POST /archive/{folder_id}`
 
-**Response (Success 200)**
-```json
-{
-  "url": "https://example.com/down/load/token/filename.mp4",
-  "name": "filename.mp4",
-  "size": 1024
-}
-```
+Generates download links for all files in a folder.
+
+### Check Archive Status
+`GET /archive/{archive_id}/status`
+
+Checks the status of an archive creation process.
+
+---
 
 ## ⚡ Torrents
 
 Base path: `/api/v1/torrents`
+
+### Add Torrent (Basic)
+`POST /add`
+
+Adds a torrent via magnet link without extra checks.
+
+**Body Parameters**
+| Name | Type | Description |
+|------|------|-------------|
+| `magnet_link` | string | Magnet URI |
+| `folder_id` | string | Target folder ID (default: "-1") |
 
 ### Smart Add (With Space Check)
 `POST /smartAdd`
@@ -243,47 +246,65 @@ Adds a torrent but checks for available storage space first.
 | `magnet_link` | string | - | Magnet URI |
 | `skip_space_check` | boolean | false | If true, skips the pre-check |
 
-**Response (Insufficient Storage 507)**
-```json
-{
-  "success": false,
-  "error": "Insufficient storage space",
-  "message": "Cannot add torrent - not enough space available",
-  "space_check": {
-    "torrent_size": 10737418240,
-    "torrent_size_formatted": "10.00 GB",
-    "available_space": 5368709120,
-    "available_space_formatted": "5.00 GB",
-    "space_needed": 5368709120,
-    "space_needed_formatted": "5.00 GB",
-    "sufficient": false
-  }
-}
-```
-
----
-
 ### Add & Download
 `POST /addAndDownload`
 
 Adds a torrent, waits for it to finish downloading on Seedr, and returns direct download links.
 
-**Response (Completed 200)**
-```json
-{
-  "success": true,
-  "status": "completed",
-  "message": "Torrent completed! 1 file(s) ready for download",
-  "folder_id": 12345,
-  "wait_time_seconds": 45,
-  "files": [
-    {
-      "file_id": 98765,
-      "name": "movie.mp4",
-      "size": 5000000,
-      "size_formatted": "4.76 MB",
-      "download_url": "https://..."
-    }
-  ]
-}
-```
+**Body Parameters**
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `magnet_link` | string | - | Magnet URI |
+| `wait_for_completion` | boolean | true | Wait for download to finish |
+| `play_in_vlc` | boolean | false | Auto-play in VLC when ready |
+
+### Add Torrent File
+`POST /add/file`
+
+Upload a `.torrent` file to add.
+
+**Form Data**
+- `file`: .torrent file (binary)
+- `folder_id`: string
+
+### List Active Torrents
+`GET /list`
+
+Lists all active torrents and their progress.
+
+### Delete Torrent
+`DELETE /{torrent_id}`
+
+Removes a torrent from the active list.
+
+### Delete Wishlist Item
+`DELETE /wishlist/{wishlist_id}`
+
+Removes an item from the wishlist.
+
+### Get Torrent Metadata
+`POST /metadata`
+
+Fetches metadata for a torrent query/hash.
+
+---
+
+## 📺 VLC Player
+
+Base path: `/api/v1/vlc`
+
+### Play URL
+`POST /play`
+
+Plays a given URL in the local VLC player.
+
+**Body Parameters**
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
+| `url` | string | - | Direct download/stream URL |
+| `enqueue` | boolean | false | Add to playlist instead of replacing |
+
+### Get VLC Config
+`GET /config`
+
+Returns current VLC path and configuration status.
