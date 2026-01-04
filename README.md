@@ -80,4 +80,4 @@ The API is now ready to accept requests. Use the [API Reference](docs/API_REFERE
 
 ## 📄 License
 
-[MIT License](LICENSE)
+[Custom License](LICENSE)
