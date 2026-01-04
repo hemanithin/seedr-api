@@ -1,4 +1,5 @@
-from flask import Flask
+import logging
+from flask import Flask, request
 from flask_restx import Api
 from config import Config
 from routes import auth_ns, account_ns, files_ns, torrents_ns, vlc_ns
@@ -8,6 +9,27 @@ def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Configure Logging
+    logging.basicConfig(
+        level=getattr(logging, app.config['LOG_LEVEL'].upper(), logging.INFO),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+
+    @app.before_request
+    def log_request_info():
+        """Log details about the incoming request"""
+        logger.info(f"Request started: {request.method} {request.path}")
+        logger.debug(f"Headers: {request.headers}")
+        if request.get_json(silent=True):
+            logger.debug(f"Body: {request.get_json(silent=True)}")
+
+    @app.after_request
+    def log_response_info(response):
+        """Log details about the response"""
+        logger.info(f"Request finished: {request.method} {request.path} - Status: {response.status}")
+        return response
     
     # Initialize Flask-RESTX API with Swagger documentation
     api = Api(
@@ -31,10 +53,10 @@ def create_app():
         from utils import client_manager
         client_manager.initialize_default_auth()
     
-    # Add custom error handlers
     @api.errorhandler(Exception)
     def handle_exception(error):
         """Handle uncaught exceptions"""
+        logging.exception("An unhandled exception occurred")
         return {
             'error': str(error),
             'message': 'An unexpected error occurred'

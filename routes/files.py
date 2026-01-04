@@ -1,3 +1,4 @@
+import logging
 from flask import request
 from flask_restx import Namespace, Resource, fields
 from seedrcc.exceptions import SeedrError
@@ -6,7 +7,9 @@ from utils.serialization import to_dict
 
 
 # Create namespace
+# Create namespace
 files_ns = Namespace('files', description='File and folder management operations')
+logger = logging.getLogger(__name__)
 
 
 @files_ns.route('/list')
@@ -19,6 +22,7 @@ class ListContents(Resource):
     @files_ns.response(500, 'Server Error')
     def get(self):
         """List folder contents"""
+        logger.info("Processing list folder contents request")
         try:
             user_id = request.args.get('user_id', 'default')
             folder_id = request.args.get('folder_id', '0')
@@ -46,6 +50,7 @@ class ListAllContents(Resource):
     @files_ns.response(500, 'Server Error')
     def get(self):
         """Recursively list all files and folders"""
+        logger.info("Processing list all contents request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -59,6 +64,7 @@ class ListAllContents(Resource):
             
             while folders_to_process:
                 current_folder_id = folders_to_process.pop(0)
+                logger.debug(f"Listing contents of folder: {current_folder_id}")
                 contents = client.list_contents(current_folder_id)
                 
                 # Add current folder items
@@ -97,6 +103,7 @@ class CreateFolder(Resource):
     @files_ns.response(500, 'Server Error')
     def post(self):
         """Create a new folder"""
+        logger.info("Processing create folder request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -137,6 +144,7 @@ class RenameFile(Resource):
     @files_ns.response(500, 'Server Error')
     def put(self, file_id):
         """Rename a file"""
+        logger.info(f"Processing rename file request for ID: {file_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -177,6 +185,7 @@ class RenameFolder(Resource):
     @files_ns.response(500, 'Server Error')
     def put(self, folder_id):
         """Rename a folder"""
+        logger.info(f"Processing rename folder request for ID: {folder_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -213,6 +222,7 @@ class DeleteFile(Resource):
     @files_ns.response(500, 'Server Error')
     def delete(self, file_id):
         """Delete a file"""
+        logger.info(f"Processing delete file request for ID: {file_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -243,6 +253,7 @@ class DeleteFolder(Resource):
     @files_ns.response(500, 'Server Error')
     def delete(self, folder_id):
         """Delete a folder"""
+        logger.info(f"Processing delete folder request for ID: {folder_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -275,6 +286,7 @@ class SearchFiles(Resource):
     @files_ns.response(500, 'Server Error')
     def get(self):
         """Search files by query"""
+        logger.info("Processing search files request")
         try:
             user_id = request.args.get('user_id', 'default')
             query = request.args.get('query')
@@ -306,6 +318,7 @@ class FetchFile(Resource):
     @files_ns.response(500, 'Server Error')
     def get(self, file_id):
         """Get file download URL"""
+        logger.info(f"Processing fetch file request for ID: {file_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -338,6 +351,7 @@ class CreateArchive(Resource):
     @files_ns.response(500, 'Server Error')
     def post(self, folder_id):
         """Create archive from folder"""
+        logger.info(f"Processing create archive request for folder ID: {folder_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -394,6 +408,7 @@ class ArchiveStatus(Resource):
     @files_ns.response(500, 'Server Error')
     def get(self, archive_id):
         """Check status of a folder archive and get download URL if ready"""
+        logger.debug(f"Checking archive status for ID: {archive_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)

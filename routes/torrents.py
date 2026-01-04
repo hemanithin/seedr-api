@@ -1,3 +1,4 @@
+import logging
 from flask import request
 from flask_restx import Namespace, Resource, fields
 from werkzeug.datastructures import FileStorage
@@ -11,7 +12,9 @@ from config import Config
 
 
 # Create namespace
+# Create namespace
 torrents_ns = Namespace('torrents', description='Torrent management operations')
+logger = logging.getLogger(__name__)
 
 # File upload parser
 upload_parser = torrents_ns.parser()
@@ -35,6 +38,7 @@ class AddTorrent(Resource):
     @torrents_ns.response(500, 'Server Error')
     def post(self):
         """Add torrent via magnet link"""
+        logger.info("Processing add torrent request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -56,6 +60,7 @@ class AddTorrent(Resource):
                 folder_id=folder_id
             )
             
+            logger.info("Torrent added successfully via magnet link")
             return {
                 'success': True,
                 'message': 'Torrent added successfully',
@@ -63,14 +68,17 @@ class AddTorrent(Resource):
             }, 200
             
         except SeedrError as e:
+            logger.error(f"SeedrError in add torrent: {e}")
             return {'error': str(e)}, 500
         except Exception as e:
+            logger.exception("Unexpected error in add torrent")
             return {'error': f'Unexpected error: {str(e)}'}, 500
 
 
 # Helper functions for smart add
 def _get_torrent_size(magnet_link):
     """Get torrent size from TorrentMeta API"""
+    logger.debug(f"Fetching torrent size for magnet: {magnet_link[:50]}...")
     try:
         torrentmeta_url = 'https://torrentmeta.fly.dev'
         headers = {'Content-Type': 'application/json'}
@@ -95,7 +103,7 @@ def _get_torrent_size(magnet_link):
         return 0  # Return 0 if size cannot be determined
         
     except Exception as e:
-        print(f"Error fetching torrent size: {str(e)}")
+        logger.error(f"Error fetching torrent size: {str(e)}")
         return 0
 
 
@@ -137,6 +145,7 @@ class SmartAddTorrent(Resource):
     @torrents_ns.response(500, 'Server Error')
     def post(self):
         """Smart add torrent with space validation - rejects if insufficient space"""
+        logger.info("Processing smart add torrent request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -243,6 +252,7 @@ class AddAndDownloadTorrent(Resource):
     @torrents_ns.response(500, 'Server Error')
     def post(self):
         """Add torrent with space validation and get download URLs (with optional polling)"""
+        logger.info("Processing add and download torrent request")
         try:
             import time
             
@@ -435,12 +445,12 @@ class AddAndDownloadTorrent(Resource):
                     # Still downloading, wait and retry
                     if is_downloading:
                         elapsed = int(time.time() - start_time)
-                        print(f"Torrent downloading: {current_progress}% (elapsed: {elapsed}s)")
+                        logger.debug(f"Torrent downloading: {current_progress}% (elapsed: {elapsed}s)")
                     
                     time.sleep(poll_interval)
                     
                 except Exception as e:
-                    print(f"Error during polling: {str(e)}")
+                    logger.error(f"Error during polling: {str(e)}")
                     time.sleep(poll_interval)
             
             # Timeout reached
@@ -466,6 +476,7 @@ class AddTorrentFile(Resource):
     @torrents_ns.response(500, 'Server Error')
     def post(self):
         """Add torrent via file upload"""
+        logger.info("Processing add torrent file request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -511,6 +522,7 @@ class DeleteTorrent(Resource):
     @torrents_ns.response(500, 'Server Error')
     def delete(self, torrent_id):
         """Delete a torrent"""
+        logger.info(f"Processing delete torrent request for ID: {torrent_id}")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)
@@ -573,6 +585,7 @@ class ListTorrents(Resource):
     @torrents_ns.response(500, 'Server Error')
     def get(self):
         """List all active torrents with progress"""
+        logger.info("Processing list torrents request")
         try:
             user_id = request.args.get('user_id', 'default')
             client = client_manager.get_client(user_id)

@@ -8,7 +8,8 @@ class Config:
     """Application configuration"""
     
     # Flask settings
-    DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = int(os.getenv('PORT', 5000))
     
