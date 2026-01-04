@@ -46,7 +46,6 @@ def create_app():
         return {
             'message': 'Welcome to Seedr API',
             'documentation': '/docs',
-            'web_tester': '/test',
             'version': '1.0',
             'endpoints': {
                 'authentication': '/api/v1/auth',
@@ -57,16 +56,7 @@ def create_app():
             }
         }
     
-    @app.route('/test')
-    def test_interface():
-        """Serve the API testing web interface"""
-        from flask import render_template
-        return render_template(
-            'index.html',
-            default_username=app.config.get('DEFAULT_USERNAME'),
-            default_password=app.config.get('DEFAULT_PASSWORD'),
-            default_auth=app.config.get('DEFAULT_AUTH', False)
-        )
+
     
     return app
 
@@ -79,7 +69,6 @@ if __name__ == '__main__':
     ╠═══════════════════════════════════════════════════════════╣
     ║  Server running on: http://{Config.HOST}:{Config.PORT}              ║
     ║  Swagger UI:        http://{Config.HOST}:{Config.PORT}/docs         ║
-    ║  Web Tester:        http://{Config.HOST}:{Config.PORT}/test         ║
     ║                                                           ║
     ║  API Endpoints:                                           ║
     ║  • Authentication: /api/v1/auth                           ║
